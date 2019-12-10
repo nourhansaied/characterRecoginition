@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+
+    <style>
+        body {
+            background-color: aliceblue;
+        }
+
+        img {
+            max-width: 380px;
+            margin-right: 20px;
+        }
+
+        img.header {
+            max-width: 100% !important;
+            width: 100%;
+            height: 100vh;
+            margin-right: 0;
+        }
+
+        body {
+            padding: 0;
+            margin: 0;
+        }
+
+        .container {
+            max-width: 1140px;
+            margin: auto;
+            text-align: center;
+            display: flex;
+            align-content: center;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 0;
+        }
+
+        input[type=file] {
+            padding: 10px;
+            background: aliceblue;
+            margin-right: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <img src="ocr_head.jpg" class="header" alt="">
+    <div class="container" role="container">
+        <input type='file' onchange="readURL(this);" role="input" />
+        <img id="blah" src="http://placehold.it/380" alt="your image" />
+        <textarea name="text" id="textArea" cols="30" rows="10"></textarea>
+    </div>
+    <script src="ocrad.js"></script>
+    <script>
+        function readURL(input) {
+            if (input.files && input.files[0]) {
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                    document.getElementById('blah').setAttribute('src', e.target.result);
+                    var imagContainer = document.getElementById('blah');
+
+                    if (window.speechSynthesis.getVoices().length == 0) {
+                        window.speechSynthesis.addEventListener('voiceschanged', function () {
+                            textToSpeech(imagContainer);
+                        });
+                    } else {
+                        // languages list available, no need to wait
+                        textToSpeech(imagContainer)
+                    }
+                };
+
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        // list of languages is probably not loaded, wait for it
+
+
+        function textToSpeech(image) {
+            // get all voices that browser offers
+            var available_voices = window.speechSynthesis.getVoices();
+
+            // this will hold an english voice
+            var english_voice = '';
+
+            // find voice by language locale "en-US"
+            // if not then select the first voice
+            for (var i = 0; i < available_voices.length; i++) {
+                if (available_voices[i].lang === 'en-US') {
+                    english_voice = available_voices[i];
+                    break;
+                }
+            }
+            if (english_voice === '')
+                english_voice = available_voices[0];
+
+            // new SpeechSynthesisUtterance object
+            var utter = new SpeechSynthesisUtterance();
+            utter.rate = 1;
+            utter.pitch = 0.8;
+            // var image = document.getElementById("image");
+            var string = OCRAD(image);
+            document.getElementById('textArea').value = string.replace(/[^a-zA-Z ]/g, "");
+            utter.text = string.replace(/[^a-zA-Z ]/g, "");
+            utter.voice = english_voice;
+
+            // event after text has been spoken
+            utter.onend = function () {
+                // alert('Speech has finished');
+            }
+
+            // speak
+            window.speechSynthesis.speak(utter);
+        }
+    </script>
+</body>
+
+</html>
